@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("profiles")
     .select(
-      "id, display_name, current_mmr, follower_count, experience_count, profile_interests(category_id, categories(slug, label))",
+      "id, display_name, current_mmr, follower_count, experience_count, follower_verify_status, follower_verified_at, follower_verify_method, profile_interests(category_id, categories(slug, label))",
       { count: "exact" }
     )
     .order("current_mmr", { ascending: false })
@@ -75,6 +75,9 @@ export async function GET(request: NextRequest) {
     rank: offset + index + 1,
     follower_count: p.follower_count,
     experience_count: p.experience_count,
+    follower_verify_status: p.follower_verify_status,
+    follower_verified_at: p.follower_verified_at,
+    follower_verify_method: p.follower_verify_method,
     categories: (
       p.profile_interests as unknown as Array<{
         categories: { slug: string; label: string };

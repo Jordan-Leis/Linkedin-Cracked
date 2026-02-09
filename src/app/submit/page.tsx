@@ -13,8 +13,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ProfileCard, type ProfileCardData } from "@/components/profile-card";
+import { PdfUpload } from "@/components/pdf-upload";
+import { ImportReview } from "@/components/import-review";
+import { VerificationPanel } from "@/components/verification-panel";
 import { createClient } from "@/lib/supabase/client";
 import { INTEREST_CATEGORIES, MAX_CATEGORIES_PER_PROFILE } from "@/lib/constants";
+import type { ParsedProfile } from "@/lib/pdf-parser";
 
 export default function SubmitPage() {
   const router = useRouter();
@@ -32,6 +36,7 @@ export default function SubmitPage() {
   const [submitting, setSubmitting] = useState(false);
   const [profile, setProfile] = useState<ProfileCardData | null>(null);
   const [isEdit, setIsEdit] = useState(false);
+  const [parsedPdf, setParsedPdf] = useState<ParsedProfile | null>(null);
 
   useEffect(() => {
     // Check for onboarding data
@@ -125,8 +130,49 @@ export default function SubmitPage() {
     }
   };
 
+  // Show import review when a PDF was parsed
+  if (parsedPdf) {
+    return (
+      <div className="flex flex-col items-center gap-8 py-8">
+        <ImportReview
+          parsed={parsedPdf}
+          onSaved={() => {
+            setParsedPdf(null);
+            // Reload the page to reflect new data
+            window.location.reload();
+          }}
+          onCancel={() => setParsedPdf(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center gap-8 py-8">
+      {/* Structured Data: PDF Import or Manual Entry */}
+      {isEdit && (
+        <div className="w-full max-w-lg space-y-3">
+          <PdfUpload onParsed={(data) => setParsedPdf(data)} />
+          <div className="text-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setParsedPdf({
+                  headline: null,
+                  experiences: [],
+                  education: [],
+                  skills: [],
+                  warnings: [],
+                })
+              }
+            >
+              Or add experiences, education &amp; skills manually
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle>{isEdit ? "Edit Your Profile" : "Submit Your Profile"}</CardTitle>
@@ -252,6 +298,13 @@ export default function SubmitPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Follower Verification */}
+      {isEdit && (
+        <div className="w-full max-w-lg">
+          <VerificationPanel />
+        </div>
+      )}
 
       {profile && (
         <div className="space-y-4">
