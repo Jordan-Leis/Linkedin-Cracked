@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   // Check if profile exists
   const { data: existingProfile } = await supabase
     .from("profiles")
-    .select("id, baseline_mmr, current_mmr")
+    .select("id, baseline_mmr, current_mmr, linkedin_url")
     .eq("user_id", user.id)
     .single();
 
@@ -60,6 +60,17 @@ export async function POST(request: Request) {
     // Update: adjust current_mmr by baseline delta
     const baselineDelta = newBaseline - existingProfile.baseline_mmr;
     const newCurrentMmr = existingProfile.current_mmr + baselineDelta;
+
+    // Reset verification if LinkedIn URL changed
+    const verificationReset =
+      existingProfile.linkedin_url !== data.linkedin_url
+        ? {
+            follower_verify_status: "unverified" as const,
+            follower_count_verified: null,
+            follower_verified_at: null,
+            follower_verify_method: null,
+          }
+        : {};
 
     const { error } = await supabase
       .from("profiles")
@@ -74,6 +85,7 @@ export async function POST(request: Request) {
         baseline_mmr: newBaseline,
         current_mmr: newCurrentMmr,
         updated_at: new Date().toISOString(),
+        ...verificationReset,
       })
       .eq("id", existingProfile.id);
 
