@@ -47,10 +47,12 @@ export async function POST(request: Request) {
     education_count: data.education_count ?? null,
   });
 
+  const avatarUrl = user.user_metadata?.avatar_url ?? null;
+
   // Check if profile exists
   const { data: existingProfile } = await supabase
     .from("profiles")
-    .select("id, baseline_mmr, current_mmr, linkedin_url")
+    .select("id, baseline_mmr, current_mmr, linkedin_url, avatar_url")
     .eq("user_id", user.id)
     .single();
 
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
         current_mmr: newCurrentMmr,
         updated_at: new Date().toISOString(),
         ...verificationReset,
+        ...(existingProfile.avatar_url ? {} : { avatar_url: avatarUrl }),
       })
       .eq("id", existingProfile.id);
 
@@ -111,6 +114,7 @@ export async function POST(request: Request) {
         education_count: data.education_count ?? null,
         baseline_mmr: newBaseline,
         current_mmr: newBaseline,
+        avatar_url: avatarUrl,
       })
       .select("id")
       .single();
