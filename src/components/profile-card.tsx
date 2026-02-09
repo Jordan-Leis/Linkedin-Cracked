@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -22,6 +23,7 @@ export interface ProfileCardData {
   categories: { slug: string; label: string }[];
   top_experiences?: { company: string; title: string }[];
   top_skills?: string[];
+  avatar_url?: string | null;
   follower_verify_status?: string | null;
   follower_verified_at?: string | null;
   follower_verify_method?: string | null;
@@ -41,7 +43,20 @@ export function ProfileCard({ profile, action }: ProfileCardProps) {
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>{profile.display_name}</span>
+          <div className="flex items-center gap-2">
+            {profile.avatar_url && (
+              <Image
+                src={profile.avatar_url}
+                alt=""
+                width={40}
+                height={40}
+                className="rounded-full object-cover"
+                referrerPolicy="no-referrer"
+                unoptimized
+              />
+            )}
+            <span>{profile.display_name}</span>
+          </div>
           <span className="text-2xl font-bold text-primary">
             {profile.current_mmr}
           </span>

@@ -310,6 +310,19 @@ export default function SubmitPage() {
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-center">Your Profile Card</h2>
           <ProfileCard profile={profile} />
+
+          {!parsedPdf && (
+            <Card className="w-full max-w-lg border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+              <CardContent className="pt-6 text-center space-y-3">
+                <p className="font-medium">Enrich your profile with LinkedIn data</p>
+                <p className="text-sm text-muted-foreground">
+                  Upload your LinkedIn PDF export to automatically add experiences, education, and skills to your battle card.
+                </p>
+                <PdfUpload onParsed={(data) => setParsedPdf(data)} />
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex justify-center">
             <Button variant="outline" onClick={() => router.push("/battle")}>
               Go to Battles

@@ -344,28 +344,14 @@ function parseEducationEntries(lines: string[]): ParsedEducation[] {
   return entries;
 }
 
-export async function parseLinkedInPdf(
-  buffer: Buffer
-): Promise<ParsedProfile> {
+/**
+ * Parse structured profile data from raw LinkedIn PDF text.
+ * Exported for direct testing without needing a real PDF buffer.
+ */
+export function parseLinkedInPdfText(rawText: string): ParsedProfile {
   const warnings: string[] = [];
 
-  let text: string;
-  try {
-    const result = await pdf(buffer);
-    text = result.text;
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.toLowerCase().includes("password")) {
-      throw new Error(
-        "This PDF appears to be password-protected. Please upload an unprotected PDF."
-      );
-    }
-    throw new Error(
-      "Failed to parse PDF. Please ensure it is a valid PDF file."
-    );
-  }
-
-  text = cleanText(text);
+  const text = cleanText(rawText);
   const lines = text
     .split("\n")
     .map((l) => l.trim())
@@ -414,4 +400,26 @@ export async function parseLinkedInPdf(
   }
 
   return { headline, experiences, education, skills, warnings };
+}
+
+export async function parseLinkedInPdf(
+  buffer: Buffer
+): Promise<ParsedProfile> {
+  let text: string;
+  try {
+    const result = await pdf(buffer);
+    text = result.text;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.toLowerCase().includes("password")) {
+      throw new Error(
+        "This PDF appears to be password-protected. Please upload an unprotected PDF."
+      );
+    }
+    throw new Error(
+      "Failed to parse PDF. Please ensure it is a valid PDF file."
+    );
+  }
+
+  return parseLinkedInPdfText(text);
 }

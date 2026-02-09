@@ -13,7 +13,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, display_name, headline, linkedin_url, current_mmr, follower_count, experience_count, projects_count, skills_count, education_count, follower_verify_status, follower_verified_at, follower_verify_method, profile_interests(category_id, categories(slug, label)), profile_experiences(id, company, title, start_date, end_date, location, description, sort_order), profile_education(id, institution, degree, field_of_study, start_date, end_date), profile_skills(id, name, sort_order)"
+      "id, display_name, avatar_url, headline, linkedin_url, current_mmr, follower_count, experience_count, projects_count, skills_count, education_count, follower_verify_status, follower_verified_at, follower_verify_method, profile_interests(category_id, categories(slug, label)), profile_experiences(id, company, title, start_date, end_date, location, description, sort_order), profile_education(id, institution, degree, field_of_study, start_date, end_date), profile_skills(id, name, sort_order)"
     )
     .eq("id", id)
     .single();

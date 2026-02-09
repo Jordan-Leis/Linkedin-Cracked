@@ -1,19 +1,52 @@
-import { describe, it, expect } from "vitest";
-import { parseLinkedInPdf, type ParsedProfile } from "@/lib/pdf-parser";
-import { readFileSync } from "fs";
-import { join } from "path";
+import { describe, it, expect, beforeAll } from "vitest";
+import { parseLinkedInPdfText, type ParsedProfile } from "@/lib/pdf-parser";
 
-// Load the sample PDF once for all tests
-const samplePdfBuffer = readFileSync(
-  join(process.cwd(), "Profile (1).pdf")
-);
+// Synthetic LinkedIn PDF text matching the parser's expected structure
+const SAMPLE_PDF_TEXT = [
+  "Contact",
+  "www.linkedin.com/in/testuser",
+  "Top Skills",
+  "PyTorch",
+  "VHDL",
+  "TensorFlow",
+  "Languages",
+  "English",
+  "Jordan Test",
+  "UWaterloo CE 2028 | Cansbridge Fellow | Director @ WAT.ai",
+  "Waterloo, Ontario, Canada",
+  "Experience",
+  "The Cansbridge Fellowship",
+  "Cansbridge Fellow",
+  "January 2026 - Present (2 months)",
+  "San Francisco Bay Area",
+  "Selected as one of 15 fellows for an entrepreneurship program.",
+  "Harding Technologies",
+  "Software Developer Intern",
+  "January 2024 - April 2024 (4 months)",
+  "Kitchener, Ontario, Canada",
+  "WAT.ai",
+  "3 years 6 months",
+  "Director",
+  "September 2025 - Present (5 months)",
+  "Technical Project Manager",
+  "January 2025 - September 2025 (9 months)",
+  "Machine Learning Engineer",
+  "May 2024 - January 2025 (9 months)",
+  "Health Canada | Sant\u00e9 Canada",
+  "Machine Learning Intern",
+  "May 2025 - August 2025 (4 months)",
+  "Ottawa, Ontario, Canada",
+  "Education",
+  "University of Waterloo",
+  "Bachelor of Computer Science, Computer Engineering \u00b7 (July 2023 - May 2028)",
+].join("\n");
 
-describe("parseLinkedInPdf", () => {
+describe("parseLinkedInPdfText", () => {
   let result: ParsedProfile;
 
   // Parse once, test multiple aspects
-  beforeAll(async () => {
-    result = await parseLinkedInPdf(samplePdfBuffer);
+  beforeAll(() => {
+    result = parseLinkedInPdfText(SAMPLE_PDF_TEXT);
   });
 
   describe("headline extraction", () => {
@@ -31,7 +64,7 @@ describe("parseLinkedInPdf", () => {
     it("parses company names correctly", () => {
       const companies = result.experiences.map((e) => e.company);
       expect(companies).toContain("The Cansbridge Fellowship");
-      expect(companies).toContain("Health Canada | Santé Canada");
+      expect(companies).toContain("Health Canada | Sant\u00e9 Canada");
     });
 
     it("parses titles correctly", () => {
@@ -142,30 +175,23 @@ describe("parseLinkedInPdf", () => {
   });
 
   describe("edge cases", () => {
-    it("rejects password-protected PDFs with a clear message", async () => {
-      // An empty/invalid buffer should throw
-      const emptyBuffer = Buffer.from([]);
-      await expect(parseLinkedInPdf(emptyBuffer)).rejects.toThrow();
+    it("returns warnings for text with no recognizable sections", () => {
+      const parsed = parseLinkedInPdfText("Just some random text\nNothing here");
+      expect(parsed.warnings.length).toBeGreaterThan(0);
     });
 
-    it("handles buffer with no recognizable sections", async () => {
-      // A minimal valid PDF with no LinkedIn content
-      // pdf-parse may still extract something or return empty text
-      const minimalPdf = Buffer.from(
-        "%PDF-1.0\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n" +
-          "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n" +
-          "3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R>>endobj\n" +
-          "xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n" +
-          "0000000115 00000 n \ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n190\n%%EOF"
+    it("returns warnings when only Experience section is missing", () => {
+      const textWithoutExp = [
+        "Top Skills",
+        "Python",
+        "Education",
+        "MIT",
+        "BS Computer Science \u00b7 (September 2020 - May 2024)",
+      ].join("\n");
+      const parsed = parseLinkedInPdfText(textWithoutExp);
+      expect(parsed.warnings).toContain(
+        "Could not find Experience section in this PDF."
       );
-      try {
-        const parsed = await parseLinkedInPdf(minimalPdf);
-        // Should get warnings about missing sections
-        expect(parsed.warnings.length).toBeGreaterThan(0);
-      } catch {
-        // pdf-parse may reject invalid PDFs, which is fine
-        expect(true).toBe(true);
-      }
     });
   });
 });
